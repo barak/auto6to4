@@ -36,6 +36,7 @@ DESC=auto6to4
 # - copy more schmutz from /etc/init.d/radvd
 # - make into nice Debian package
 # - use debconf to control radvd and true external IPv4 address
+# - after setup test the tunnel and bring down if non-functional
 
 set -e
 
