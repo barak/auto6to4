@@ -1,0 +1,27 @@
+This is a shell script to turn on/off an IPv6 tunnel using the tun6to4
+interface, which exchanges IPv6 packets by encapsulating them in IPv4
+packets and using protocol 41 to the IPv4 anycast address 192.88.99.1
+
+Instructions for doing this typically discuss laborious manual
+configuration, tedious calculations, manipulation of various
+networking configuration files, and modifications when the host moves
+to a different IP address.  Meaning basically no one does it.
+
+This script instead sets up the tunnel completely automatically,
+without monkeying with any networking configuration files.
+
+See the top of the script for instructions, or invoke with no
+arguments for usage summary.
+
+CAUTION!
+
+Unless instructed otherwise via -r, if radvd is installed this script
+will turn on routing/adverting of an IPv6 subnet on the local network.
+This will enable IPv6 automatically on other machines on the local
+network.  If IPv6 isn't working as well as IPv4, that can cause
+mysterious performance problems when those machines try to talk to
+remote hosts which have both IPv4 and IPv6 DNS records.
+
+UPSTREAM
+
+For the latest version, see http://github.com/barak/auto6to4.git

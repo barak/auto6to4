@@ -1,12 +1,7 @@
 #!/bin/bash -f
-# CVS version control block - do not edit manually
-#  $RCSfile: auto6to4,v $
-#  $Revision: 1.16 $
-#  $Date: 2008-04-20 06:53:17 $
-#  $Source: /home/cvs/meg/system/auto6to4,v $
 
 #  auto6to4 - robustly and automatically enable IPv6 cloud around IPv4 host.
-#  Copyright 2005, Barak A. Pearlmutter <barak@cs.nuim.ie>
+#  Copyright 2009, Barak A. Pearlmutter <barak@cs.nuim.ie>
 #   Hamilton Institute, NUI Maynooth, Co. Kildare, Ireland
 #   http://www-bcl.cs.nuim.ie/~barak/
 #   (Much thanks to David Malone.  David wrote the book on IPv6; buy it!)
@@ -20,6 +15,8 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
+
+# For the latest version visit http://github.com/barak/auto6to4.git
 
 DESC=auto6to4
 
@@ -51,15 +48,16 @@ usage()
     echo "           -d             Debug (verbose output)"
     echo "           -h             Print this help text and exit"
     echo "           -v             Print version and exit"
+    echo
+    echo "Automatically sets up IPv6 using IPv4 tunnel to anycast address."
+    echo
+    echo "CAUTION: if radvd is installed and the -r option is not given,"
+    echo "will route/advertise an IPv6 subnet on the local network."
 }
 
 version()
 {
-    echo auto6to4 '$Id: auto6to4,v 1.16 2008-04-20 06:53:17 bap Exp $'
-    echo '  $RCSfile: auto6to4,v $'
-    echo '  $Revision: 1.16 $'
-    echo '  $Date: 2008-04-20 06:53:17 $'
-    echo '  $Source: /home/cvs/meg/system/auto6to4,v $'
+    echo auto6to4 1.17
 }
 
 # Name of tunnel interface to configure
@@ -90,7 +88,7 @@ done
 shift $((OPTIND - 1))
 
 if [ $# != 1 ]; then
-    usage
+    version; echo; usage
     exit 1
 fi
 
@@ -130,7 +128,7 @@ case "$1" in
 	    echo "warning: not attempting to enable 6to4 tunnel,"
 	    echo "   multiple suitable IPv4 addresses configured."
 	    echo " Addresses: ${ip4addr}."
-	    echo " You may wish to reconfigure ${DESC} to choose one."
+	    echo " Consider using option -i <IPv4-address-to-use>"
 	    exit 1
 	fi
 
