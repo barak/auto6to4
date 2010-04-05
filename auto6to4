@@ -104,7 +104,8 @@ case "$1" in
 	    exit
 	fi
 
-	# get list of local 1st-class IPv4 addresses, unless given in option
+	# Get list of local 1st-class IPv4 addresses, unless given in option,
+	# being careful to screen out addresses in non-global ranges.
 	if [ -z ${ip4addr} ]; then
 	    ip4addr=$(ip -o -4 addr show \
 		| tr / ' ' \
@@ -114,7 +115,8 @@ case "$1" in
 		| egrep -v '^172[.]1[6-9][.]' \
 		| egrep -v '^172[.]2[0-9][.]' \
 		| egrep -v '^172[.]3[0-1][.]' \
-		| egrep -v '^192[.]168[.]')
+		| egrep -v '^192[.]168[.]' \
+		| egrep -v '^169[.]254[.]')
 	fi
 
 	# abort if there are none
