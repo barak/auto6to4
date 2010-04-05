@@ -73,6 +73,9 @@ radvd_pidfile=${radvd_dir}/radvd-auto.pid
 radvd_uid=radvd
 radvd_options="--config ${radvd_cnf} -u ${radvd_uid} -p ${radvd_pidfile}"
 
+# misc defaults
+debug=0
+
 # process options
 while getopts "hvi:rd" opt
 do
@@ -119,6 +122,10 @@ case "$1" in
 		| egrep -v '^169[.]254[.]')
 	fi
 
+	if [ ${debug} != 0 ]; then
+	    echo "Suitable IPv4 addresses: ${ip4addr}"
+	fi
+
 	# abort if there are none
 	if [ -z "${ip4addr}" ]; then
 	    echo "warning: unable to enable 6to4 tunnel,"
@@ -142,13 +149,24 @@ case "$1" in
 	ip6net=$(ipv6calc --in ipv4 --out ipv6 --action conv6to4 ${ip4addr})
 	ip6addr=${ip6net}1
 
+	if [ ${debug} != 0 ]; then
+	    echo "ip6net: ${ip6net}"
+	    echo "ip6addr: ${ip6addr}"
+	fi
+
 	# Kill tunnel if possibly alive
-	if ip tunnel | egrep --silent "^${tunnel}:"; then
+	if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
+	    if [ ${debug} != 0 ]; then
+		echo "killing tunnel ${tunnel}"
+	    fi
 	    ip tunnel del ${tunnel}
 	fi
 
 	# Flush tunnel from routing table if present
 	if ip -6 route | egrep --silent " dev ${tunnel} " ; then
+	    if [ ${debug} != 0 ]; then
+		echo "flushing tunnel ${tunnel} from routing table"
+	    fi
 	    ip -6 route flush dev ${tunnel}
 	    ip -6 addr flush dev ${tunnel}
 	fi
@@ -201,6 +219,9 @@ interface ${i}
 };
 EOF
 	    # set up to route each subnet
+	    if [ ${debug} != 0 ]; then
+		echo "address ${pref}::1/64 dev ${i}"
+	    fi
 	    ip -6 addr add ${pref}::1/64 dev ${i}
 	    inum=$((inum + 1))
 	done
