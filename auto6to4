@@ -58,7 +58,7 @@ usage()
 
 version()
 {
-    echo auto6to4 1.17
+    echo auto6to4 1.17+
 }
 
 # Name of tunnel interface to configure
@@ -74,7 +74,7 @@ radvd_uid=radvd
 radvd_options="--config ${radvd_cnf} -u ${radvd_uid} -p ${radvd_pidfile}"
 
 # misc defaults
-debug=0
+debug=false
 
 # process options
 while getopts "hvi:rd" opt
@@ -84,7 +84,7 @@ do
 	v) version; exit 0 ;;
 	i) ip4addr=$OPTARG ;;
 	r) unset radvd ;;
-	d) debug=1 ;;
+	d) debug=true; echo "debug: ${debug}" ;;
 	*) usage; exit 2 ;;
     esac
 done
@@ -96,6 +96,8 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
+
+${debug} && echo "action: $1"
 
 case "$1" in
     start)
@@ -122,9 +124,7 @@ case "$1" in
 		| egrep -v '^169[.]254[.]')
 	fi
 
-	if [ ${debug} != 0 ]; then
-	    echo "Suitable IPv4 addresses: ${ip4addr}"
-	fi
+	${debug} && echo "Suitable IPv4 addresses: ${ip4addr}"
 
 	# abort if there are none
 	if [ -z "${ip4addr}" ]; then
@@ -149,33 +149,32 @@ case "$1" in
 	ip6net=$(ipv6calc --in ipv4 --out ipv6 --action conv6to4 ${ip4addr})
 	ip6addr=${ip6net}1
 
-	if [ ${debug} != 0 ]; then
-	    echo "ip6net: ${ip6net}"
-	    echo "ip6addr: ${ip6addr}"
-	fi
+	${debug} && echo "ip6net: ${ip6net}"
+	${debug} && echo "ip6addr: ${ip6addr}"
 
 	# Kill tunnel if possibly alive
 	if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
-	    if [ ${debug} != 0 ]; then
-		echo "killing tunnel ${tunnel}"
-	    fi
+	    ${debug} && echo "killing tunnel ${tunnel}"
 	    ip tunnel del ${tunnel}
 	fi
 
 	# Flush tunnel from routing table if present
-	if ip -6 route | egrep --silent " dev ${tunnel} " ; then
-	    if [ ${debug} != 0 ]; then
-		echo "flushing tunnel ${tunnel} from routing table"
-	    fi
+	if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
+	    ${debug} && echo "flushing tunnel ${tunnel} from routing table"
 	    ip -6 route flush dev ${tunnel}
 	    ip -6 addr flush dev ${tunnel}
 	fi
 
 	# configure and start the tunnel
+	${debug} && echo "adding tunnel ${tunnel}"
 	ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
+	${debug} && echo "turning on tunnel ${tunnel}"
 	ip link set dev ${tunnel} up
+	${debug} && echo "setting address of tunnel ${tunnel}"
 	ip -6 addr add ${ip6addr}/16 dev ${tunnel}
+	${debug} && echo "setting route ::/96 via tunnel ${tunnel}"
 	ip -6 route add ::/96 dev ${tunnel}
+	${debug} && echo "setting route 2000::/3 via tunnel ${tunnel}"
 	ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
 
 
@@ -219,9 +218,7 @@ interface ${i}
 };
 EOF
 	    # set up to route each subnet
-	    if [ ${debug} != 0 ]; then
-		echo "address ${pref}::1/64 dev ${i}"
-	    fi
+	    ${debug} && echo "route via ${pref}::1/64 dev ${i}"
 	    ip -6 addr add ${pref}::1/64 dev ${i}
 	    inum=$((inum + 1))
 	done
@@ -232,29 +229,35 @@ EOF
 
 	# shut down any existing ravdvd, using appropriate UID for security
 	if [ -f ${radvd_pidfile} ]; then
+	    ${debug} && echo "killing existing radvd"
 	    su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
 	fi
 
 	# Start advertising
+	${debug} && echo "starting radvd"
 	${radvd} ${radvd_options}
 
 	;;
     stop)
 	# shut down any existing ravdvd, using appropriate UID for security
 	if [ -f ${radvd_pidfile} ]; then
+	    ${debug} && echo "killing existing radvd"
 	    su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
 	fi
 
 	# Flush tunnel from routing table if present
-	if ip -6 route | egrep --silent " dev ${tunnel} " ; then
+	if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
+	    ${debug} && echo "flushing tunnel ${tunnel} from routing table"
 	    ip -6 route flush dev ${tunnel}
 	    ip -6 addr flush dev ${tunnel}
 	fi
 
 	# shut down tunnel
+	${debug} && echo "setting down tunnel ${tunnel}"
 	ip link set dev ${tunnel} down
 
 	# kill tunnel
+	${debug} && echo "deleting tunnel ${tunnel}"
 	ip tunnel del ${tunnel}
 	;;
     restart|reload|force-reload)
