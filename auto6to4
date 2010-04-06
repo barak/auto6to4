@@ -61,6 +61,169 @@ version()
     echo auto6to4 1.17+
 }
 
+start()
+{
+	## Get info and decide whether to bring up tunnel.
+
+	# Check for IPv6 support in kernel
+    if [ \! -e /proc/sys/net/ipv6 ]; then
+	echo "error: IPv6 support must be enabled in the kernel for ${DESC} to work."
+	exit
+    fi
+
+	# Get list of local 1st-class IPv4 addresses, unless given in option,
+	# being careful to screen out addresses in non-global ranges.
+    if [ -z ${ip4addr} ]; then
+	ip4addr=$(ip -o -4 addr show \
+	    | tr / ' ' \
+	    | awk '{print $4}' \
+	    | egrep -v '^127[.]' \
+	    | egrep -v '^10[.]' \
+	    | egrep -v '^172[.]1[6-9][.]' \
+	    | egrep -v '^172[.]2[0-9][.]' \
+	    | egrep -v '^172[.]3[0-1][.]' \
+	    | egrep -v '^192[.]168[.]' \
+	    | egrep -v '^169[.]254[.]')
+    fi
+
+    ${debug} && echo "Suitable IPv4 addresses: ${ip4addr}"
+
+	# abort if there are none
+    if [ -z "${ip4addr}" ]; then
+	echo "warning: unable to enable 6to4 tunnel,"
+	echo "   no suitable IPv4 address configured."
+	exit 1
+    fi
+
+	# abort if there are more than one
+    if echo "${ip4addr}" | egrep --silent ' '; then
+	echo "warning: not attempting to enable 6to4 tunnel,"
+	echo "   multiple suitable IPv4 addresses configured."
+	echo " Addresses: ${ip4addr}."
+	echo " Consider using option -i <IPv4-address-to-use>"
+	exit 1
+    fi
+
+
+	## Attempt to bring up tunnel
+
+	# Convert chosen 1st-class IPv4 address into tunnel endpoint address
+    ip6net=$(ipv6calc --in ipv4 --out ipv6 --action conv6to4 ${ip4addr})
+    ip6addr=${ip6net}1
+
+    ${debug} && echo "ip6net: ${ip6net}"
+    ${debug} && echo "ip6addr: ${ip6addr}"
+
+	# Kill tunnel if possibly alive
+    if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
+	${debug} && echo "killing tunnel ${tunnel}"
+	ip tunnel del ${tunnel}
+    fi
+
+	# Flush tunnel from routing table if present
+    if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
+	${debug} && echo "flushing tunnel ${tunnel} from routing table"
+	ip -6 route flush dev ${tunnel}
+	ip -6 addr flush dev ${tunnel}
+    fi
+
+	# configure and start the tunnel
+    ${debug} && echo "adding tunnel ${tunnel}"
+    ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
+    ${debug} && echo "turning on tunnel ${tunnel}"
+    ip link set dev ${tunnel} up
+    ${debug} && echo "setting address of tunnel ${tunnel}"
+    ip -6 addr add ${ip6addr}/16 dev ${tunnel}
+    ${debug} && echo "setting route ::/96 via tunnel ${tunnel}"
+    ip -6 route add ::/96 dev ${tunnel}
+    ${debug} && echo "setting route 2000::/3 via tunnel ${tunnel}"
+    ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
+
+
+	## Route and advertise IPv6 addresses on LAN
+
+    if [ -z ${radvd} ]; then
+	    # echo "radvd disabled"
+	exit
+    fi
+
+	# check if radvd is available
+    if [ \! -x ${radvd} ]; then
+	echo "warning: no radvd executable, not advertising"
+	exit
+    fi
+
+	# Build a configuration file for radvd.
+	# We make one stanza for each suitable interface,
+	# with a subnet allocated to each.
+
+    mkdir --parents ${radvd_dir}
+    echo > ${radvd_cnf}
+
+    interfaces=`ip -4 addr \
+	| egrep '^[0-9].*BROADCAST.*MULTICAST' \
+	| tr -d : \
+	| awk '{print $2}'`
+    inum=1
+    for i in ${interfaces}; do
+	pref=`echo ${ip6net}${inum} | sed 's/::/:/'`
+	cat >> ${radvd_cnf} <<EOF
+interface ${i}
+{
+   AdvSendAdvert on;
+   IgnoreIfMissing on;
+   AdvDefaultLifetime 600;
+   AdvDefaultPreference low;
+   prefix ${pref}::/64
+   {
+   };
+};
+EOF
+	    # set up to route each subnet
+	${debug} && echo "route via ${pref}::1/64 dev ${i}"
+	ip -6 addr add ${pref}::1/64 dev ${i}
+	inum=$((inum + 1))
+    done
+
+        # Enable routing
+    sysctl -q -w net.ipv6.conf.all.accept_ra=0
+    sysctl -q -w net.ipv6.conf.all.forwarding=1
+
+	# shut down any existing ravdvd, using appropriate UID for security
+    if [ -f ${radvd_pidfile} ]; then
+	${debug} && echo "killing existing radvd"
+	su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
+    fi
+
+	# Start advertising
+    ${debug} && echo "starting radvd"
+    ${radvd} ${radvd_options}
+}
+
+stop()
+{
+	# shut down any existing ravdvd, using appropriate UID for security
+    if [ -f ${radvd_pidfile} ]; then
+	${debug} && echo "killing existing radvd"
+	su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
+    fi
+
+	# Flush tunnel from routing table if present
+    if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
+	${debug} && echo "flushing tunnel ${tunnel} from routing table"
+	ip -6 route flush dev ${tunnel}
+	ip -6 addr flush dev ${tunnel}
+    fi
+
+	# shut down tunnel
+    ${debug} && echo "setting down tunnel ${tunnel}"
+    ip link set dev ${tunnel} down
+
+	# kill tunnel
+    ${debug} && echo "deleting tunnel ${tunnel}"
+    ip tunnel del ${tunnel}
+}
+
 # Name of tunnel interface to configure
 tunnel=tun6in4
 ip4relay=192.88.99.1
@@ -101,168 +264,14 @@ ${debug} && echo "action: $1"
 
 case "$1" in
     start)
-	## Get info and decide whether to bring up tunnel.
-
-	# Check for IPv6 support in kernel
-	if [ \! -e /proc/sys/net/ipv6 ]; then
-	    echo "error: IPv6 support must be enabled in the kernel for ${DESC} to work."
-	    exit
-	fi
-
-	# Get list of local 1st-class IPv4 addresses, unless given in option,
-	# being careful to screen out addresses in non-global ranges.
-	if [ -z ${ip4addr} ]; then
-	    ip4addr=$(ip -o -4 addr show \
-		| tr / ' ' \
-		| awk '{print $4}' \
-		| egrep -v '^127[.]' \
-		| egrep -v '^10[.]' \
-		| egrep -v '^172[.]1[6-9][.]' \
-		| egrep -v '^172[.]2[0-9][.]' \
-		| egrep -v '^172[.]3[0-1][.]' \
-		| egrep -v '^192[.]168[.]' \
-		| egrep -v '^169[.]254[.]')
-	fi
-
-	${debug} && echo "Suitable IPv4 addresses: ${ip4addr}"
-
-	# abort if there are none
-	if [ -z "${ip4addr}" ]; then
-	    echo "warning: unable to enable 6to4 tunnel,"
-	    echo "   no suitable IPv4 address configured."
-	    exit 1
-	fi
-
-	# abort if there are more than one
-	if echo "${ip4addr}" | egrep --silent ' '; then
-	    echo "warning: not attempting to enable 6to4 tunnel,"
-	    echo "   multiple suitable IPv4 addresses configured."
-	    echo " Addresses: ${ip4addr}."
-	    echo " Consider using option -i <IPv4-address-to-use>"
-	    exit 1
-	fi
-
-
-	## Attempt to bring up tunnel
-
-	# Convert chosen 1st-class IPv4 address into tunnel endpoint address
-	ip6net=$(ipv6calc --in ipv4 --out ipv6 --action conv6to4 ${ip4addr})
-	ip6addr=${ip6net}1
-
-	${debug} && echo "ip6net: ${ip6net}"
-	${debug} && echo "ip6addr: ${ip6addr}"
-
-	# Kill tunnel if possibly alive
-	if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
-	    ${debug} && echo "killing tunnel ${tunnel}"
-	    ip tunnel del ${tunnel}
-	fi
-
-	# Flush tunnel from routing table if present
-	if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
-	    ${debug} && echo "flushing tunnel ${tunnel} from routing table"
-	    ip -6 route flush dev ${tunnel}
-	    ip -6 addr flush dev ${tunnel}
-	fi
-
-	# configure and start the tunnel
-	${debug} && echo "adding tunnel ${tunnel}"
-	ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
-	${debug} && echo "turning on tunnel ${tunnel}"
-	ip link set dev ${tunnel} up
-	${debug} && echo "setting address of tunnel ${tunnel}"
-	ip -6 addr add ${ip6addr}/16 dev ${tunnel}
-	${debug} && echo "setting route ::/96 via tunnel ${tunnel}"
-	ip -6 route add ::/96 dev ${tunnel}
-	${debug} && echo "setting route 2000::/3 via tunnel ${tunnel}"
-	ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
-
-
-	## Route and advertise IPv6 addresses on LAN
-
-	if [ -z ${radvd} ]; then
-	    # echo "radvd disabled"
-	    exit
-	fi
-
-	# check if radvd is available
-	if [ \! -x ${radvd} ]; then
-	    echo "warning: no radvd executable, not advertising"
-	    exit
-	fi
-
-	# Build a configuration file for radvd.
-	# We make one stanza for each suitable interface,
-	# with a subnet allocated to each.
-
-	mkdir --parents ${radvd_dir}
-	echo > ${radvd_cnf}
-
-	interfaces=`ip -4 addr \
-	    | egrep '^[0-9].*BROADCAST.*MULTICAST' \
-	    | tr -d : \
-	    | awk '{print $2}'`
-	inum=1
-	for i in ${interfaces}; do
-	    pref=`echo ${ip6net}${inum} | sed 's/::/:/'`
-	    cat >> ${radvd_cnf} <<EOF
-interface ${i}
-{
-   AdvSendAdvert on;
-   IgnoreIfMissing on;
-   AdvDefaultLifetime 600;
-   AdvDefaultPreference low;
-   prefix ${pref}::/64
-   {
-   };
-};
-EOF
-	    # set up to route each subnet
-	    ${debug} && echo "route via ${pref}::1/64 dev ${i}"
-	    ip -6 addr add ${pref}::1/64 dev ${i}
-	    inum=$((inum + 1))
-	done
-
-        # Enable routing
-	sysctl -q -w net.ipv6.conf.all.accept_ra=0
-	sysctl -q -w net.ipv6.conf.all.forwarding=1
-
-	# shut down any existing ravdvd, using appropriate UID for security
-	if [ -f ${radvd_pidfile} ]; then
-	    ${debug} && echo "killing existing radvd"
-	    su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
-	fi
-
-	# Start advertising
-	${debug} && echo "starting radvd"
-	${radvd} ${radvd_options}
-
+	start;
 	;;
     stop)
-	# shut down any existing ravdvd, using appropriate UID for security
-	if [ -f ${radvd_pidfile} ]; then
-	    ${debug} && echo "killing existing radvd"
-	    su -s /bin/sh -c "kill `cat ${radvd_pidfile}`" ${radvd_uid}
-	fi
-
-	# Flush tunnel from routing table if present
-	if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
-	    ${debug} && echo "flushing tunnel ${tunnel} from routing table"
-	    ip -6 route flush dev ${tunnel}
-	    ip -6 addr flush dev ${tunnel}
-	fi
-
-	# shut down tunnel
-	${debug} && echo "setting down tunnel ${tunnel}"
-	ip link set dev ${tunnel} down
-
-	# kill tunnel
-	${debug} && echo "deleting tunnel ${tunnel}"
-	ip tunnel del ${tunnel}
+	stop;
 	;;
     restart|reload|force-reload)
-	$0 stop
-	$0 start
+	stop
+	start
 	;;
     *)
 	usage
