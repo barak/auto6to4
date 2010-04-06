@@ -74,7 +74,7 @@ start()
     # Get list of local 1st-class IPv4 addresses, unless given in option,
     # being careful to screen out addresses in non-global ranges.
     if [ -z ${ip4addr} ]; then
-	ip4addr=$(ip -o -4 addr show \
+	ip4addr=$(ip -oneline -4 addr show \
 	    | tr / ' ' \
 	    | awk '{print $4}' \
 	    | egrep -v '^127[.]' \
@@ -123,7 +123,7 @@ start()
     ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
     ${debug} && echo "turning on tunnel ${tunnel}"
     ip link set dev ${tunnel} up
-    ${debug} && echo "setting address of tunnel ${tunnel}"
+    ${debug} && echo "setting address ${ip6addr}/16 on tunnel ${tunnel}"
     ip -6 addr add ${ip6addr}/16 dev ${tunnel}
     ${debug} && echo "setting route ::/96 via tunnel ${tunnel}"
     ip -6 route add ::/96 dev ${tunnel}
@@ -151,10 +151,9 @@ start()
     mkdir --parents ${radvd_dir}
     echo > ${radvd_cnf}
 
-    interfaces=$(ip -4 addr \
-	| egrep '^[0-9].*BROADCAST.*MULTICAST' \
-	| tr -d : \
-	| awk '{print $2}')
+    interfaces=$(ip -oneline -4 addr show \
+	| awk '{print $2}' | sort | uniq | egrep -v '^lo$')
+    ${debug} && echo "interfaces for radvd: ${interfaces}"
     inum=1
     for i in ${interfaces}; do
 	pref=$(echo ${ip6net}${inum} | sed 's/::/:/g')
@@ -177,6 +176,7 @@ EOF
     done
 
     # Enable routing
+    ${debug} && echo "enabling IPv6 routing"
     sysctl -q -w net.ipv6.conf.all.accept_ra=0
     sysctl -q -w net.ipv6.conf.all.forwarding=1
 
