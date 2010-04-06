@@ -86,7 +86,7 @@ start()
 	    | egrep -v '^169[.]254[.]')
     fi
 
-    ${debug} && echo "Suitable IPv4 addresses: ${ip4addr}"
+    ${debug} && echo "${DESC}: Suitable IPv4 addresses: ${ip4addr}"
 
     # abort if there are none
     if [ -z "${ip4addr}" ]; then
@@ -111,23 +111,23 @@ start()
     ip6net=$(ipv6calc --in ipv4 --out ipv6 --action conv6to4 ${ip4addr})
     ip6addr=${ip6net}1
 
-    ${debug} && echo "ip6net: ${ip6net}"
-    ${debug} && echo "ip6addr: ${ip6addr}"
+    ${debug} && echo "${DESC}: ip6net: ${ip6net}"
+    ${debug} && echo "${DESC}: ip6addr: ${ip6addr}"
 
     delete_tunnel
 
     flush_tunnel_route
 
     # configure and start the tunnel
-    ${debug} && echo "adding tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: adding tunnel ${tunnel}"
     ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
-    ${debug} && echo "turning on tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: turning on tunnel ${tunnel}"
     ip link set dev ${tunnel} up
-    ${debug} && echo "setting address ${ip6addr}/16 on tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: setting address ${ip6addr}/16 on tunnel ${tunnel}"
     ip -6 addr add ${ip6addr}/16 dev ${tunnel}
-    ${debug} && echo "setting route ::/96 via tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
     ip -6 route add ::/96 dev ${tunnel}
-    ${debug} && echo "setting route 2000::/3 via tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: setting route 2000::/3 via tunnel ${tunnel}"
     ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
 
 
@@ -153,7 +153,7 @@ start()
 
     interfaces=$(ip -oneline -4 addr show \
 	| awk '{print $2}' | sort | uniq | egrep -v '^lo$')
-    ${debug} && echo "interfaces for radvd: ${interfaces}"
+    ${debug} && echo "${DESC}: interfaces for radvd: ${interfaces}"
     inum=1
     for i in ${interfaces}; do
 	pref=$(echo ${ip6net}${inum} | sed 's/::/:/g')
@@ -170,20 +170,20 @@ interface ${i}
 };
 EOF
 	# set up to route each subnet
-	${debug} && echo "route via ${pref}::1/64 dev ${i}"
+	${debug} && echo "${DESC}: route via ${pref}::1/64 dev ${i}"
 	ip -6 addr add ${pref}::1/64 dev ${i}
 	inum=$((inum + 1))
     done
 
     # Enable routing
-    ${debug} && echo "enabling IPv6 routing"
+    ${debug} && echo "${DESC}: enabling IPv6 routing"
     sysctl -q -w net.ipv6.conf.all.accept_ra=0
     sysctl -q -w net.ipv6.conf.all.forwarding=1
 
     kill_radvd
 
     # Start advertising
-    ${debug} && echo "starting radvd"
+    ${debug} && echo "${DESC}: starting radvd"
     ${radvd} ${radvd_options}
 }
 
@@ -194,7 +194,7 @@ stop()
     flush_tunnel_route
 
     # shut down tunnel
-    ${debug} && echo "setting down tunnel ${tunnel}"
+    ${debug} && echo "${DESC}: setting down tunnel ${tunnel}"
     ip link set dev ${tunnel} down
 
     delete_tunnel
@@ -204,7 +204,7 @@ flush_tunnel_route()
 {
     # Flush tunnel from routing table if present
     if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
-	${debug} && echo "flushing routes involving tunnel ${tunnel}"
+	${debug} && echo "${DESC}: flushing routes involving tunnel ${tunnel}"
 	ip -6 route flush dev ${tunnel}
 	ip -6 addr flush dev ${tunnel}
     fi
@@ -214,7 +214,7 @@ kill_radvd()
 {
     # shut down any existing ravdvd, using appropriate UID for security
     if [ -f ${radvd_pidfile} ]; then
-	${debug} && echo "killing existing radvd"
+	${debug} && echo "${DESC}: killing existing radvd"
 	su -s /bin/sh -c "kill $(cat ${radvd_pidfile})" ${radvd_uid}
     fi
 }
@@ -223,7 +223,7 @@ delete_tunnel()
 {
     # Kill tunnel if possibly alive
     if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
-	${debug} && echo "deleting tunnel ${tunnel}"
+	${debug} && echo "${DESC}: deleting tunnel ${tunnel}"
 	ip tunnel del ${tunnel}
     fi
 }
@@ -251,7 +251,7 @@ do
 	v) version; exit 0 ;;
 	i) ip4addr=$OPTARG ;;
 	r) unset radvd ;;
-	d) debug=true; echo "debug: ${debug}" ;;
+	d) debug=true; echo "${DESC}: debug: ${debug}" ;;
 	*) usage; exit 2 ;;
     esac
 done
@@ -264,7 +264,7 @@ if [ $# != 1 ]; then
 fi
 
 
-${debug} && echo "action: $1"
+${debug} && echo "${DESC}: action: $1"
 
 case "$1" in
     start)
