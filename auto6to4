@@ -46,6 +46,8 @@ usage()
     echo
     echo "  options  -i <ip-addr>   Use given external IPv4 address"
     echo "           -r             Disable radvd IPv6 route advertiser"
+    echo "           -I iface0      Interface to provide IPv6 on (repeat for"
+    echo "                          many; defaults to all)"
     echo "           -d             Debug (verbose output)"
     echo "           -h             Print this help text and exit"
     echo "           -v             Print version and exit"
@@ -154,11 +156,17 @@ start()
     fi
     echo > ${radvd_cnf}
 
-    interfaces=$(ip -oneline -4 addr show \
-	| awk '{print $2}' | sort | uniq | egrep -v '^lo$')
-    ${debug} && echo "${DESC}: interfaces for radvd: ${interfaces}"
+    if [ -z ${radvd_interfaces} ]; then
+	radvd_interfaces=$(ip -oneline -4 addr show \
+	    | awk '{print $2}' | sort | uniq | egrep -v '^lo$')
+    fi
+    if [ -z "${radvd_interfaces}" ]; then
+	echo "error: no radvd interfaces"
+	exit 1
+    fi
+    ${debug} && echo "${DESC}: radvd interfaces: ${radvd_interfaces}"
     inum=1
-    for i in ${interfaces}; do
+    for i in ${radvd_interfaces}; do
 	pref=$(echo ${ip6net}${inum} | sed 's/::/:/g')
 	cat >> ${radvd_cnf} <<EOF
 interface ${i}
@@ -242,17 +250,19 @@ radvd_cnf=${radvd_dir}/radvd-auto.conf
 radvd_pidfile=${radvd_dir}/radvd-auto.pid
 radvd_uid=radvd
 radvd_options="--config ${radvd_cnf} -u ${radvd_uid} -p ${radvd_pidfile}"
+radvd_interfaces=""
 
 # misc defaults
 debug=false
 
 # process options
-while getopts "hvi:rd" opt
+while getopts "hvi:rI:d" opt
 do
-    case "$opt" in
+    case "${opt}" in
 	h) usage; exit 0 ;;
 	v) version; exit 0 ;;
-	i) ip4addr=$OPTARG ;;
+	i) ip4addr=${OPTARG} ;;
+	I) radvd_interfaces="${radvd_interfaces} ${OPTARG}" ;;
 	r) unset radvd ;;
 	d) debug=true; echo "${DESC}: debug: ${debug}" ;;
 	*) usage; exit 2 ;;
