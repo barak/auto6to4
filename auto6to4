@@ -148,7 +148,10 @@ start()
     # We make one stanza for each suitable interface,
     # with a subnet allocated to each.
 
-    mkdir --parents ${radvd_dir}
+    if [ ! -d ${radvd_dir} ]; then
+	mkdir --parents ${radvd_dir}
+	chown ${radvd_uid} ${radvd_dir}
+    fi
     echo > ${radvd_cnf}
 
     interfaces=$(ip -oneline -4 addr show \
