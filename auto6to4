@@ -164,7 +164,7 @@ start()
 	echo "error: no radvd interfaces"
 	exit 1
     fi
-    ${debug} && echo "${DESC}: radvd interfaces: ${radvd_interfaces}"
+    ${debug} && echo "${DESC}: radvd interfaces:" ${radvd_interfaces}
     inum=1
     for i in ${radvd_interfaces}; do
 	pref=$(echo ${ip6net}${inum} | sed 's/::/:/g')
@@ -180,8 +180,16 @@ interface ${i}
    };
 };
 EOF
-	# set up to route each subnet
+	# flush existing 6to4 subnets on target interface
+	for a in $(ip -6 a list dev ${i} | egrep 'inet6.*2002:' \
+	    | awk '{print $2}'); do
+	    ${debug} && echo "${DESC}: flush old subnet ${a} dev ${i}"
+	    ip -6 a del ${a} dev ${i}
+	done
+
+	# set up to route subnet on target interface
 	${debug} && echo "${DESC}: route via ${pref}::1/64 dev ${i}"
+
 	ip -6 addr add ${pref}::1/64 dev ${i}
 	inum=$((inum + 1))
     done
