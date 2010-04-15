@@ -50,8 +50,8 @@ usage()
     echo " -r             Disable radvd IPv6 route advertiser"
     echo " -I iface0      Interface to give IPv6 subnet (repeat for many; default: all)"
     echo " -d             Debug (verbose output)"
-    echo " -h             Print this help text and exit"
-    echo " -v             Print version and exit"
+    echo " -h, --help     Print this help text and exit"
+    echo " -v, --version  Print version and exit"
     echo
     echo "CAUTION: if radvd is installed and the -r option is not given,"
     echo "will route/advertise an IPv6 subnet on the local network."
@@ -246,6 +246,7 @@ delete_tunnel()
     fi
 }
 
+
 # Name of tunnel interface to configure
 tunnel=tun6in4
 ip4relay=192.88.99.1
@@ -263,6 +264,17 @@ radvd_interfaces=""
 debug=false
 
 # process options
+
+if [ "$*" = "--help" ]; then
+    usage
+    exit 0
+fi
+
+if [ "$*" = "--version" ]; then
+    version
+    exit 0
+fi
+
 while getopts "hvi:rI:d" opt
 do
     case "${opt}" in
