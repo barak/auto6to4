@@ -13,20 +13,22 @@ HELP2MAN = help2man
 
 MANSECT=8
 
-all: auto6to4.$(MANSECT)
+PROG=auto6to4
 
-auto6to4.$(MANSECT): auto6to4
+all: $(PROG).$(MANSECT)
+
+$(PROG).$(MANSECT): $(PROG)
 	$(HELP2MAN) --no-info --section=$(MANSECT) \
 	 --name="set up IPv6 over IPv4 protocol 41 tunnel" \
-	 --output=auto6to4.$(MANSECT) ./auto6to4
+	 --output=$(PROG).$(MANSECT) ./$(PROG)
 
-install: auto6to4.$(MANSECT)
+install: $(PROG).$(MANSECT)
 	-$(INSTALL_DIR)			$(DESTDIR)$(sbindir)
-	$(INSTALL_PROGRAM) auto6to4	$(DESTDIR)$(sbindir)/
+	$(INSTALL_PROGRAM) $(PROG)	$(DESTDIR)$(sbindir)/
 	-$(INSTALL_DIR)			$(DESTDIR)$(mandir)/man$(MANSECT)
-	$(INSTALL_DATA) auto6to4.$(MANSECT)	$(DESTDIR)$(mandir)/man$(MANSECT)/
+	$(INSTALL_DATA) $(PROG).$(MANSECT) $(DESTDIR)$(mandir)/man$(MANSECT)/
 
 clean:
-	-rm -f auto6to4.$(MANSECT)
+	-rm -f $(PROG).$(MANSECT)
 
 .PHONY: all install clean
