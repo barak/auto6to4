@@ -221,7 +221,7 @@ stop()
 flush_tunnel_route()
 {
     # Flush tunnel from routing table if present
-    if [ $(ip -6 route list dev ${tunnel} | wc -l) != 0 ]; then
+    if [ $(ip -oneline -6 route list dev ${tunnel} 2> /dev/null | wc -l) != 0 ]; then
 	${debug} && echo "${DESC}: flushing routes involving tunnel ${tunnel}"
 	ip -6 route flush dev ${tunnel}
 	ip -6 addr flush dev ${tunnel}
@@ -240,7 +240,7 @@ kill_radvd()
 delete_tunnel()
 {
     # Kill tunnel if possibly alive
-    if [ $(ip -6 tunnel show ${tunnel} | wc -l) != 0 ]; then
+    if [ $(ip -oneline -6 tunnel show ${tunnel} 2> /dev/null | wc -l) != 0 ]; then
 	${debug} && echo "${DESC}: deleting tunnel ${tunnel}"
 	ip tunnel del ${tunnel}
     fi
