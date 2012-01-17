@@ -59,7 +59,7 @@ usage()
 
 version()
 {
-    echo auto6to4 1.17+
+    echo auto6to4 1.18
 }
 
 start()
