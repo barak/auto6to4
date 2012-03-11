@@ -11,6 +11,8 @@ INSTALL_DATA    = $(INSTALL) --mode a+r,u+w
 
 HELP2MAN = help2man
 
+RM = rm
+
 MANSECT=8
 
 PROG=auto6to4
@@ -27,6 +29,10 @@ install: $(PROG).$(MANSECT)
 	$(INSTALL_PROGRAM) $(PROG)	$(DESTDIR)$(sbindir)/
 	-$(INSTALL_DIR)			$(DESTDIR)$(mandir)/man$(MANSECT)
 	$(INSTALL_DATA) $(PROG).$(MANSECT) $(DESTDIR)$(mandir)/man$(MANSECT)/
+
+uninstall:
+	-$(RM) -f $(DESTDIR)$(sbindir)/$(PROG)
+	-$(RM) -f $(DESTDIR)$(mandir)/man$(MANSECT)/$(PROG).$(MANSECT)
 
 clean:
 	-rm -f $(PROG).$(MANSECT)
