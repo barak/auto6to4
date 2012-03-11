@@ -1,7 +1,3 @@
-[NAME]
-
-set up IPv6 over IPv4 protocol 41 tunnel
-
 [SUMMARY]
 
 This is a shell script to turn on/off an IPv6 tunnel using the tun6to4
