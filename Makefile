@@ -37,4 +37,4 @@ uninstall:
 clean:
 	-rm -f $(PROG).$(MANSECT)
 
-.PHONY: all install clean
+.PHONY: all install uninstall clean
