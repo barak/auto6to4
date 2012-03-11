@@ -1,9 +1,26 @@
 #!/bin/bash -f
+### BEGIN INIT INFO
+# Provides:          6to4
+# Required-Start:    $networking $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
+# Should-Start:
+# Should-Stop:
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: automatic 6to4 tunnel
+# Description:       Set up IPv6 using 6to4 tunnel to IPv4 anycast if possible.
+#		     This requires a first-class IPv4 address, however failure
+#		     should this not be available is graceful.  An IPv6 subnet
+#		     will be created, routed, and advertised on each local network
+#		     if radvd is installed.
+### END INIT INFO
+
+# Author: Barak A. Pearlmutter
 
 #  auto6to4 - robustly and automatically enable IPv6 cloud around IPv4 host.
-#  Copyright 2009, Barak A. Pearlmutter <barak@cs.nuim.ie>
+#  Copyright 2009-2012, Barak A. Pearlmutter <barak@cs.nuim.ie>
 #   Hamilton Institute, NUI Maynooth, Co. Kildare, Ireland
-#   http://www-bcl.cs.nuim.ie/~barak/
+#   http://www.bcl.hamilton.ie/~barak/
 #   (Much thanks to David Malone.  David wrote the book on IPv6; buy it!)
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -31,7 +48,7 @@ DESC=auto6to4
 
 ## To Do
 
-# - graceful error handling
+# - more graceful error handling
 # - figure out how to integrate into /etc/network/if-up.d/ etc
 # - copy more schmutz from /etc/init.d/radvd
 # - make into nice Debian package
@@ -42,24 +59,23 @@ set -e
 
 usage()
 {
-    echo "auto6to4 sets up IPv6 using an IPv4 protocol 41 tunnel to anycast address."
-    echo
     echo "Usage: auto6to4 [OPTION]... {start|stop|restart|reload|force-reload}"
     echo
-    echo " -i <ip-addr>   Use given external IPv4 address"
-    echo " -r             Disable radvd IPv6 route advertiser"
-    echo " -I iface0      Interface to give IPv6 subnet (repeat for many; default: all)"
-    echo " -d             Debug (verbose output)"
-    echo " -h, --help     Print this help text and exit"
-    echo " -v, --version  Print version and exit"
+    echo "auto6to4 sets up IPv6 using an IPv4 protocol 41 tunnel to anycast address."
     echo
-    echo "CAUTION: if radvd is installed and the -r option is not given,"
-    echo "will route/advertise an IPv6 subnet on the local network."
+    echo "  -i <ip-addr>   Use given external IPv4 address (for use behind NAT)"
+    echo "  -r             Disable radvd IPv6 route advertiser (if radvd is installed"
+    echo "                 and this option is not given, an IPv6 subnet will be routed"
+    echo "                 and advertised on the local network.)"
+    echo "  -I iface0      Interface for IPv6 subnet (repeat for many; default: all)"
+    echo "  -d             Debug (verbose output)"
+    echo "  -h, --help     Print this help text and exit"
+    echo "  -v, --version  Print version and exit"
 }
 
 version()
 {
-    echo auto6to4 1.18
+    echo auto6to4 1.19
 }
 
 start()

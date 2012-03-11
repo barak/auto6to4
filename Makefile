@@ -19,9 +19,10 @@ PROG=auto6to4
 
 all: $(PROG).$(MANSECT)
 
-$(PROG).$(MANSECT): $(PROG)
+$(PROG).$(MANSECT): $(PROG) README
 	$(HELP2MAN) --no-info --section=$(MANSECT) \
 	 --name="set up IPv6 over IPv4 protocol 41 tunnel" \
+	 --include=README \
 	 --output=$(PROG).$(MANSECT) ./$(PROG)
 
 install: $(PROG).$(MANSECT)

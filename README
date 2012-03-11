@@ -1,3 +1,9 @@
+[NAME]
+
+set up IPv6 over IPv4 protocol 41 tunnel
+
+[SUMMARY]
+
 This is a shell script to turn on/off an IPv6 tunnel using the tun6to4
 interface, which exchanges IPv6 packets by encapsulating them in IPv4
 packets and using protocol 41 to the IPv4 anycast address 192.88.99.1
@@ -5,23 +11,62 @@ packets and using protocol 41 to the IPv4 anycast address 192.88.99.1
 Instructions for doing this typically discuss laborious manual
 configuration, tedious calculations, manipulation of various
 networking configuration files, and modifications when the host moves
-to a different IP address.  Meaning basically no one does it.
+to a different IP address.  Meaning basically no one does it.  This
+script instead sets up the tunnel completely automatically, without
+monkeying with any networking configuration files.  It attempts to be
+robust, for example, if the local host does not have a first-class
+IPv4 address the script simply exits with a cogent warning.
 
-This script instead sets up the tunnel completely automatically,
-without monkeying with any networking configuration files.
+However, there are some options for unusual installations.  In
+particular, if you are behind a NAT but have configured the NAT to
+route protocol 41 packets appropriately, you need to supply the
+externally apparent IP address using the -i option.
 
-See the top of the script for instructions, or invoke with no
-arguments for usage summary.
+The invocation conventions are chosen to allow the script to be
+installed as /etc/init.d/auto6to4 using the standard mechanisms.
 
-CAUTION!
+See the top of the script for additional instructions, dependencies,
+and configuration information, or invoke with the --help option for
+usage summary.
 
-Unless instructed otherwise via -r, if radvd is installed this script
-will turn on routing/adverting of an IPv6 subnet on the local network.
-This will enable IPv6 automatically on other machines on the local
-network.  If IPv6 isn't working as well as IPv4, that can cause
-mysterious performance problems when those machines try to talk to
-remote hosts which have both IPv4 and IPv6 DNS records.
+[CAUTION]
 
-UPSTREAM
+Unless disabled with the -r option, if radvd is installed an IPv6
+subnet will be created, routed through the newly-created tunnel, and
+advertised on the local network.  This should enable IPv6
+automatically on other machines on the local network.  (If the host is
+on more than one local network, one such network will be created,
+routed, and advertised for each local network.)
 
-For the latest version, see http://github.com/barak/auto6to4
+If IPv6 is not working as well as IPv4, and the other machines on the
+local network are configured to prefer IPv6 to IPv4 when both are
+available for a particular connection (as is the unfortunate default
+on most Linux and *BSD distributions), this can cause performance
+problems and enormous start-up latency when local machines try to use
+IPv6 to communicate with remote hosts for which both IPv4 and IPv6
+addresses are available.
+
+[FILES]
+
+When radvd is used to advertise a subnet, the following temporary files
+are generated:
+ /var/run/radvd/radvd-auto.conf
+ /var/run/radvd/radvd-auto.pid
+
+[EXAMPLE]
+
+ auto6to4 -r start
+ auto6to4 stop
+
+[AUTHOR]
+
+Barak A. Pearlmutter
+
+[REPORTING BUGS]
+
+For the latest version, and to report bugs or suggest improvements,
+see http://github.com/barak/auto6to4
+
+[COPYRIGHT]
+
+Released under the GNU GPLv2+.
