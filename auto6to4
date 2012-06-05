@@ -6,7 +6,7 @@
 # Should-Start:
 # Should-Stop:
 # Default-Start:     S
-# Default-Stop:      0 6
+# Default-Stop:      0 1 6
 # Short-Description: automatic 6to4 tunnel
 # Description:       Set up IPv6 using 6to4 tunnel to IPv4 anycast if possible.
 #		     This requires a first-class IPv4 address, however failure
