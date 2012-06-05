@@ -1,0 +1,29 @@
+Source: auto6to4
+Section: net
+Priority: optional
+Maintainer: Barak A. Pearlmutter <bap@debian.org>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.3
+Homepage: http://github.com/barak/auto6to4
+Vcs-Git: git://git.debian.org/git/collab-maint/auto6to4.git
+Vcs-Browser: http://git.debian.org/?p=collab-maint/auto6to4.git;a=summary
+
+Package: auto6to4
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, iproute, ipv6calc
+Suggests: radvd
+Description: Enable IPv6 via IPv4 protocol 41 tunnel
+ Script to turn on/off an IPv6 tunnel using the tun6to4 interface,
+ which exchanges IPv6 packets by encapsulating them in IPv4 packets
+ and using protocol 41 to the IPv4 anycast address 192.88.99.1
+ .
+ Instructions for doing this typically discuss laborious manual
+ configuration, tedious calculations, manipulation of various
+ networking configuration files, and modifications when the host moves
+ to a different IP address.  This script instead sets up the tunnel
+ completely automatically, without modifying with any networking
+ configuration files.  It is robust; for example, if the local host
+ does not have a first-class IPv4 address it exits with a cogent
+ warning.
+ .
+ If radvd is installed, when possible a subnet is routed and advertised.

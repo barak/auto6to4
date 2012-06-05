@@ -1,0 +1,35 @@
+#! /bin/sh
+# Reload auto6to4 when an interface comes up
+
+set -e
+
+# Don't bother to reload when lo is configured.
+if [ "$IFACE" = lo ]; then
+	exit 0
+fi
+
+# Only run from ifup.
+if [ "$MODE" != start ]; then
+	exit 0
+fi
+
+# Auto6to4 only cares about inet and inet6. Get thee gone, strange people
+# still using ipx.
+#if [ "$ADDRFAM" != inet ]; then
+#	exit 0
+#fi
+
+# Actually, due to this bug - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=475188
+# we need to do things differently. Exclude ipx instead (and IPv6; auto6to4 runs on IPv4).
+if [ "${ADDRFAM}" = "ipx" ] || [ "${ADDRFAM}" = "inet6" ]; then
+	exit 0
+fi
+
+# Is /usr mounted?
+if [ ! -e /usr/sbin/auto6to4 ]; then
+	exit 0
+fi
+
+invoke-rc.d auto6to4 reload --quiet
+
+exit 0
