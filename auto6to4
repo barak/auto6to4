@@ -11,8 +11,8 @@
 # Description:       Set up IPv6 using 6to4 tunnel to IPv4 anycast if possible.
 #		     This requires a first-class IPv4 address, however failure
 #		     should this not be available is graceful.  An IPv6 subnet
-#		     will be created, routed, and advertised on each local network
-#		     if radvd is installed.
+#		     will be created, routed, and advertised on each local
+#		     network if radvd is installed.
 ### END INIT INFO
 
 # Author: Barak A. Pearlmutter
@@ -75,7 +75,7 @@ usage()
 
 version()
 {
-    echo auto6to4 1.19
+    echo auto6to4 1.20
 }
 
 start()
@@ -322,7 +322,7 @@ case "$1" in
 	stop;
 	;;
     restart|reload|force-reload)
-	stop
+	stop || true
 	start
 	;;
     *)
