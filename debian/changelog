@@ -1,3 +1,9 @@
+auto6to4 (1.20-1) experimental; urgency=low
+
+  * Ignore stopping error during restart
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sun, 01 Jul 2012 21:31:37 +0100
+
 auto6to4 (1.19-1) experimental; urgency=low
 
   * Initial release
