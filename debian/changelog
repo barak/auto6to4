@@ -1,3 +1,14 @@
+auto6to4 (1.20-2) experimental; urgency=medium
+
+  * Update dependency to iproute2 | iproute (closes: #768347)
+  * bump debian standards version
+  * silence lintian tag vcs-field-not-canonical
+  * silence lintian tag hyphen-used-as-minus-sign
+  * silence lintian tag init.d-script-does-not-provide-itself
+  * silence lintian tag unversioned-copyright-format-uri
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Fri, 07 Nov 2014 22:37:25 +0000
+
 auto6to4 (1.20-1) experimental; urgency=low
 
   * Ignore stopping error during restart
