@@ -5,8 +5,8 @@ Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.6
 Homepage: http://github.com/barak/auto6to4
-Vcs-Git: git://git.debian.org/git/collab-maint/auto6to4.git
-Vcs-Browser: http://git.debian.org/?p=collab-maint/auto6to4.git;a=summary
+Vcs-Git: git://anonscm.debian.org/collab-maint/auto6to4.git
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/auto6to4.git;a=summary
 
 Package: auto6to4
 Architecture: all
