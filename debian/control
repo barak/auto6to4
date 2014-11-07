@@ -10,7 +10,9 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/auto6to4.git;a=summary
 
 Package: auto6to4
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, iproute, ipv6calc
+Depends: ${shlibs:Depends}, ${misc:Depends},
+	 iproute2 | iproute,
+	 ipv6calc
 Suggests: radvd
 Description: Enable IPv6 via IPv4 protocol 41 tunnel
  Script to turn on/off an IPv6 tunnel using the tun6to4 interface,
