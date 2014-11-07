@@ -23,7 +23,10 @@ $(PROG).$(MANSECT): $(PROG) README
 	$(HELP2MAN) --no-info --section=$(MANSECT) \
 	 --name="set up IPv6 over IPv4 protocol 41 tunnel" \
 	 --include=README \
-	 --output=$(PROG).$(MANSECT) ./$(PROG)
+	 --output=- ./$(PROG) \
+	| sed 's: [-][-]: \\-\\-:' \
+	| sed 's: [-]: \\-:' \
+	> $(PROG).$(MANSECT)
 
 install: $(PROG).$(MANSECT)
 	-$(INSTALL_DIR)			$(DESTDIR)$(sbindir)
