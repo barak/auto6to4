@@ -1,4 +1,4 @@
-Format: http://dep.debian.net/deps/dep5
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: auto6to4
 Source: http://github.com/barak/auto6to4
 
