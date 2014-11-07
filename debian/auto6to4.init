@@ -1,6 +1,6 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          6to4
+# Provides:          6to4 auto6to4
 # Required-Start:    $network $local_fs $remote_fs
 # Required-Stop:     $local_fs $remote_fs
 # Should-Start:
