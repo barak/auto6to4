@@ -1,3 +1,9 @@
+auto6to4 (1.20-3) experimental; urgency=medium
+
+  * fix vcs browser field by dropping ; suffic (closes: #768629)
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sat, 08 Nov 2014 20:40:04 +0000
+
 auto6to4 (1.20-2) experimental; urgency=medium
 
   * Update dependency to iproute2 | iproute (closes: #768347)
