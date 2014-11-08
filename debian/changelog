@@ -1,6 +1,6 @@
 auto6to4 (1.20-3) experimental; urgency=medium
 
-  * fix vcs browser field by dropping ; suffic (closes: #768629)
+  * fix vcs browser field by dropping ; suffix (closes: #768629)
 
  -- Barak A. Pearlmutter <bap@debian.org>  Sat, 08 Nov 2014 20:40:04 +0000
 
