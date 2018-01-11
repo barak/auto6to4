@@ -1,9 +1,9 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: auto6to4
-Source: http://github.com/barak/auto6to4
+Source: https://github.com/barak/auto6to4
 
 Files: *
-Copyright: 2009-2012 Barak A. Pearlmutter <barak@cs.nuim.ie>
+Copyright: 2009-2012 Barak A. Pearlmutter <barak@pearlmutter.net>
 License: GPL-2.0+
 
 Files: debian/*
