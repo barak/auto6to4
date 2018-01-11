@@ -25,6 +25,17 @@ See the top of the script for additional instructions, dependencies,
 and configuration information, or invoke with the --help option for
 usage summary.
 
+[ALTERNATIVES]
+
+On Debian, a stanza in /etc/network/interfaces of the form
+
+    auto 6to4
+    iface 6to4 inet6 6to4
+	    local YOUR-IPv4-ADDRESS-HERE
+
+may be an easier way to bring up a 6to4 interface, assuming you have a
+static IPv4 address.
+
 [CAUTION]
 
 Unless disabled with the -r option, if radvd is installed an IPv6
@@ -56,12 +67,12 @@ are generated:
 
 [AUTHOR]
 
-Barak A. Pearlmutter
+Barak A. Pearlmutter <barak@pearlmutter.net>
 
 [REPORTING BUGS]
 
 For the latest version, and to report bugs or suggest improvements,
-see http://github.com/barak/auto6to4
+see https://github.com/barak/auto6to4
 
 [COPYRIGHT]
 

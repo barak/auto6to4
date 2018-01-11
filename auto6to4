@@ -15,12 +15,12 @@
 #		     network if radvd is installed.
 ### END INIT INFO
 
-# Author: Barak A. Pearlmutter
+# Author: Barak A. Pearlmutter <barak@pearlmutter.net>
 
 #  auto6to4 - robustly and automatically enable IPv6 cloud around IPv4 host.
-#  Copyright 2009-2012, Barak A. Pearlmutter <barak@cs.nuim.ie>
+#  Copyright 2009-2012, Barak A. Pearlmutter  <barak@pearlmutter.net>
 #   Hamilton Institute, NUI Maynooth, Co. Kildare, Ireland
-#   http://www.bcl.hamilton.ie/~barak/
+#   http://barak.pearlmutter.net
 #   (Much thanks to David Malone.  David wrote the book on IPv6; buy it!)
 #
 #   This program is free software; you can redistribute it and/or modify
