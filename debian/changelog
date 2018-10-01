@@ -1,3 +1,9 @@
+auto6to4 (1.20-4) UNRELEASED; urgency=medium
+
+  * d/rules: Remove trailing whitespaces
+
+ -- Ondřej Nový <onovy@debian.org>  Mon, 01 Oct 2018 10:11:21 +0200
+
 auto6to4 (1.20-3) experimental; urgency=medium
 
   * fix vcs browser field by dropping ; suffix (closes: #768629)
