@@ -142,14 +142,19 @@ start()
 
     # configure and start the tunnel
     ${debug} && echo "${DESC}: adding tunnel ${tunnel}"
+    ${debug} && echo "ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}"
     ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
     ${debug} && echo "${DESC}: turning on tunnel ${tunnel}"
+    ${debug} && echo "ip link set dev ${tunnel} up"
     ip link set dev ${tunnel} up
     ${debug} && echo "${DESC}: setting address ${ip6addr}/16 on tunnel ${tunnel}"
+    ${debug} && echo "ip -6 addr add ${ip6addr}/16 dev ${tunnel}"
     ip -6 addr add ${ip6addr}/16 dev ${tunnel}
     ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
+    ${debug} && echo "ip -6 route add ::/96 dev ${tunnel}"
     ip -6 route add ::/96 dev ${tunnel}
     ${debug} && echo "${DESC}: setting route 2000::/3 via tunnel ${tunnel}"
+    ${debug} && echo "ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}"
     ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
 
 
