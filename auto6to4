@@ -150,12 +150,12 @@ start()
     ${debug} && echo "${DESC}: setting address ${ip6addr}/16 on tunnel ${tunnel}"
     ${debug} && echo "ip -6 addr add ${ip6addr}/16 dev ${tunnel}"
     ip -6 addr add ${ip6addr}/16 dev ${tunnel}
-    ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
-    ${debug} && echo "ip -6 route add ::/96 dev ${tunnel}"
-    ip -6 route add ::/96 dev ${tunnel}
     ${debug} && echo "${DESC}: setting route 2000::/3 via tunnel ${tunnel}"
     ${debug} && echo "ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}"
     ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
+    ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
+    ${debug} && echo "ip -6 route add ::/96 dev ${tunnel}"
+    ip -6 route add ::/96 dev ${tunnel}
 
 
     ## Route and advertise IPv6 addresses on LAN
