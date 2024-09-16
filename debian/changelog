@@ -1,8 +1,14 @@
-auto6to4 (1.20-4) UNRELEASED; urgency=medium
+auto6to4 (1.20-4) experimental; urgency=medium
 
+  [ Ondřej Nový ]
   * d/rules: Remove trailing whitespaces
 
- -- Ondřej Nový <onovy@debian.org>  Mon, 01 Oct 2018 10:11:21 +0200
+  [ Barak A. Pearlmutter ]
+  * Track upstream merge (well, cherry-pick) tweaks from 8NEZNhg7U73i
+  * Secure URL
+  * debian packaging updates and modernizations
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 16 Sep 2024 14:35:42 +0100
 
 auto6to4 (1.20-3) experimental; urgency=medium
 
