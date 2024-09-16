@@ -94,13 +94,18 @@ start()
 	ip4addr=$(ip -oneline -4 addr show \
 	    | tr / ' ' \
 	    | awk '{print $4}' \
-	    | egrep -v '^127[.]' \
 	    | egrep -v '^10[.]' \
+	    | egrep -v '^100[.](6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])[.]' \
+	    | egrep -v '^127[.]' \
 	    | egrep -v '^172[.]1[6-9][.]' \
 	    | egrep -v '^172[.]2[0-9][.]' \
 	    | egrep -v '^172[.]3[0-1][.]' \
+	    | egrep -v '^169[.]254[.]' \
+	    | egrep -v '^192[.]0[.]2[.]([0-1][0-9][0-9]|2[0-4][0-9]|25[0-5])' \
 	    | egrep -v '^192[.]168[.]' \
-	    | egrep -v '^169[.]254[.]')
+	    | egrep -v '^198[.]51[.]100[.]([0-1][0-9][0-9]|2[0-4][0-9]|25[0-5])' \
+	    | egrep -v '^203[.]0[.]113[.]([0-1][0-9][0-9]|2[0-4][0-9]|25[0-5])'
+        )
     fi
 
     ${debug} && echo "${DESC}: Suitable IPv4 addresses: ${ip4addr}"
@@ -137,15 +142,20 @@ start()
 
     # configure and start the tunnel
     ${debug} && echo "${DESC}: adding tunnel ${tunnel}"
+    ${debug} && echo "ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}"
     ip tunnel add ${tunnel} mode sit ttl 128 remote any local ${ip4addr}
     ${debug} && echo "${DESC}: turning on tunnel ${tunnel}"
+    ${debug} && echo "ip link set dev ${tunnel} up"
     ip link set dev ${tunnel} up
     ${debug} && echo "${DESC}: setting address ${ip6addr}/16 on tunnel ${tunnel}"
+    ${debug} && echo "ip -6 addr add ${ip6addr}/16 dev ${tunnel}"
     ip -6 addr add ${ip6addr}/16 dev ${tunnel}
-    ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
-    ip -6 route add ::/96 dev ${tunnel}
     ${debug} && echo "${DESC}: setting route 2000::/3 via tunnel ${tunnel}"
+    ${debug} && echo "ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}"
     ip -6 route add 2000::/3 via ::${ip4relay} dev ${tunnel}
+    ${debug} && echo "${DESC}: setting route ::/96 via tunnel ${tunnel}"
+    ${debug} && echo "ip -6 route add ::/96 dev ${tunnel}"
+    ip -6 route add ::/96 dev ${tunnel}
 
 
     ## Route and advertise IPv6 addresses on LAN
